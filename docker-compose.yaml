@@ -1,0 +1,44 @@
+version: '3.7'
+
+services:
+  identity-notary:
+    container_name: identity-notary
+    restart: always
+    build:
+      context: ./identity-providers/
+      dockerfile: Dockerfile
+    ports:
+      - "8081:443"
+    environment:
+      HTTP_PORT: 443
+      NODE_TLS_REJECT_UNAUTHORIZED: 0
+    command: "npm run start:notary"
+
+  identity-clinic:
+    container_name: identity-clinic
+    restart: always
+    build:
+      context: ./identity-providers/
+      dockerfile: Dockerfile
+    ports:
+      - "8082:443"
+    environment:
+      HTTP_PORT: 443
+      NODE_TLS_REJECT_UNAUTHORIZED: 0
+    command: "npm run start:clinic"
+
+  identity-insurance:
+    container_name: identity-insurance
+    restart: always
+    build:
+      context: ./identity-providers/
+      dockerfile: Dockerfile
+    ports:
+      - "8083:443"
+    environment:
+      HTTP_PORT: 443
+      NODE_TLS_REJECT_UNAUTHORIZED: 0
+    command: "npm run start:insurance"
+
+networks:
+  default:

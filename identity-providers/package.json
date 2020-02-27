@@ -5,6 +5,7 @@
   "main": "index.js",
   "dependencies": {
     "axios": "^0.19.2",
+    "body-parser": "^1.19.0",
     "did-jwt": "^4.0.0",
     "did-jwt-vc": "^0.1.3",
     "did-resolver": "^1.1.0",
@@ -15,7 +16,8 @@
   "scripts": {
     "start:notary": "node notary.js",
     "start:clinic": "node clinic.js",
-    "start:insurance": "node insurance.js"
+    "start:insurance": "node insurance.js",
+    "start:user": "node user.js"
   },
   "author": "",
   "license": "ISC"

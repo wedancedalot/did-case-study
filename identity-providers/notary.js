@@ -1,16 +1,22 @@
 const express = require('express')
 const https = require('https')
 const fs = require('fs')
-const didJWT = require('did-jwt')
 const WebDID = require('./did.js')
 const credentials = require('./types/credentials.js')
 
 const notaryDID = new WebDID("identity-notary")
+
+// Set a resolvable url for identity's agent service
 notaryDID.setAgentService("https://identity-notary/agent")
 
-const httpPort = process.env.HTTP_PORT || 8081
 const app = express()
 
+// This is a default route for resolving web DIDs
+app.get('/.well-known/did.json', (req, res) => {
+  res.send(notaryDID.toJSON())
+})
+
+// This is a route for this DIDs cloud agent
 app.get('/agent/:msg', (req, res) => {
 	notaryDID.verifyRequest(req.params.msg)
 	.then(req => {
@@ -27,6 +33,11 @@ app.get('/agent/:msg', (req, res) => {
 				return notaryDID.signCredential(ins.toJSON())
 			break;
 
+			case 'did:web:identity-user':
+				let usr = new credentials.IdentityCredential(req.payload.iss, "Linus Torvalds", "28.12.1969")
+				return notaryDID.signCredential(usr.toJSON())
+			break;
+
 			default:
 				throw 'Unknown entity'
 		}
@@ -37,13 +48,10 @@ app.get('/agent/:msg', (req, res) => {
 	})
 })
 
-app.get('/.well-known/did.json', (req, res) => {
-  res.send(notaryDID.toJSON())
-})
-
+// Open a https port to listen incoming connections and be resolvable from other entities
 https.createServer({
   key: fs.readFileSync('./cert/notary.key'),
   cert: fs.readFileSync('./cert/notary.cert')
-}, app).listen(httpPort, () => {
-  console.log(`Listening on ${httpPort}`)
+}, app).listen(process.env.HTTPS_PORT, () => {
+  console.log(`Listening on ${process.env.HTTPS_PORT}`)
 })

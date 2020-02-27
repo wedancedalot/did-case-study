@@ -12,22 +12,77 @@ class OrganizationCredential {
 		  vc: {
 		    '@context': [
 		    	'https://www.w3.org/2018/credentials/v1',
-		    	// in practice, this uri should return the valid json-ld for the OrganizationCredential,
-		    	// for the sake of simplicity this is just a dummy link
-		    	"https://example.com/credentials/organization/v1" 
+		    	"https://schema.org" 
 		    ],
 		    type: ['VerifiableCredential', "OrganizationCredential"],
 		    credentialSubject: {
 		    	id: this.sub, 
-		    	organization: {
-		    		legalName: this.legalName,
-					taxID: this.taxID,
-					address: this.address
-		    	}
+	    		legalName: this.legalName,
+				taxID: this.taxID,
+				address: this.address
 		    }
 		  }
 		}
  	}
 }
 
-module.exports = {OrganizationCredential}
+class IdentityCredential {
+ 	constructor(sub, name, birthDate) {
+ 		this.sub = sub
+ 		this.name = name
+ 		this.birthDate = birthDate
+ 	}
+
+ 	toJSON () {
+ 		return {
+		  sub: this.sub,
+		  vc: {
+		    '@context': [
+		    	'https://www.w3.org/2018/credentials/v1',
+		    	"https://schema.org" 
+		    ],
+		    type: ['VerifiableCredential', "IdentityCredential"],
+		    credentialSubject: {
+		    	id: this.sub, 
+	    		name: this.name,
+				birthDate: this.birthDate
+		    }
+		  }
+		}
+ 	}
+}
+
+class InvoiceCredential {
+ 	constructor(sub, identifier, description, amount, currency) {
+ 		this.sub = sub
+
+ 		this.identifier = identifier
+ 		this.description = description
+ 		this.amount = amount
+ 		this.currency = currency
+ 	}
+
+ 	toJSON () {
+ 		return {
+		  sub: this.sub,
+		  vc: {
+		    '@context': [
+		    	'https://www.w3.org/2018/credentials/v1',
+		    	"https://schema.org" 
+		    ],
+		    type: ['VerifiableCredential', "InvoiceCredential"],
+		    credentialSubject: {
+		    	id: this.sub, 
+				identifier: this.identifier,
+				description: this.description,
+				totalPaymentDue: {
+					value: this.amount,
+					currency: this.currency
+				},
+		    }
+		  }
+		}
+ 	}
+}
+
+module.exports = {OrganizationCredential, IdentityCredential, InvoiceCredential}

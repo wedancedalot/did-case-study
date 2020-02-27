@@ -7,11 +7,8 @@ services:
     build:
       context: ./identity-providers/
       dockerfile: Dockerfile
-    ports:
-      - "8081:443"
-    environment:
-      HTTP_PORT: 443
-      NODE_TLS_REJECT_UNAUTHORIZED: 0
+    env_file:
+      - .env
     command: "npm run start:notary"
 
   identity-clinic:
@@ -20,11 +17,10 @@ services:
     build:
       context: ./identity-providers/
       dockerfile: Dockerfile
-    ports:
-      - "8082:443"
-    environment:
-      HTTP_PORT: 443
-      NODE_TLS_REJECT_UNAUTHORIZED: 0
+    env_file:
+      - .env
+    depends_on: 
+      - identity-notary
     command: "npm run start:clinic"
 
   identity-insurance:
@@ -33,12 +29,41 @@ services:
     build:
       context: ./identity-providers/
       dockerfile: Dockerfile
-    ports:
-      - "8083:443"
-    environment:
-      HTTP_PORT: 443
-      NODE_TLS_REJECT_UNAUTHORIZED: 0
+    env_file:
+      - .env
+    depends_on:
+      - identity-notary
     command: "npm run start:insurance"
+
+  identity-user:
+    container_name: identity-user
+    restart: always
+    build:
+      context: ./identity-providers/
+      dockerfile: Dockerfile
+    ports:
+      - 8080:8080
+    env_file:
+      - .env
+    depends_on:
+      - identity-notary
+      - identity-clinic
+      - identity-insurance
+    command: "npm run start:user"
+
+  wallet-ui:
+    container_name: wallet-ui
+    restart: always
+    build:
+      context: ./wallet-ui/
+      dockerfile: Dockerfile
+    ports:
+      - 8081:8080
+    env_file:
+      - .env
+    depends_on:
+      - identity-user
+    command: "npm run serve"
 
 networks:
   default:

@@ -9,6 +9,7 @@ const webResolver = require('web-did-resolver')
 const resolver = new Resolver(webResolver.getResolver())
 
 const DID_CONTEXT = "https://w3id.org/did/v1"
+const VC_CONTEXT = "https://www.w3.org/2018/credentials/v1"
 const PUBLIC_KEY_TYPE = "Secp256k1VerificationKey2018"
 const JWT_ALG = 'ES256K-R'
 
@@ -20,7 +21,11 @@ class WebDID {
 
         this.id = "did:web:" + name
         this.keypair = this.randomKeypair()
-        this.verifiedCredentials = []
+        this.vs = []
+    }
+
+    addVC(vc) {
+        this.vs.push(vs)
     }
 
     getID () {
@@ -33,10 +38,6 @@ class WebDID {
 
     setVCService(endpoint) {
         this.vcServiceEndpoint = endpoint
-    }
-
-    addVC(vc) {
-        this.verifiedCredentials.push(vc)
     }
 
     randomKeypair () {
@@ -114,7 +115,6 @@ class WebDID {
         })
     }
 
-
     resolveAgentServiceEndpoint() {
         return this.resolve(resolver)
         .then(did => {
@@ -127,6 +127,21 @@ class WebDID {
             }
 
             throw "No AgentService resolved for this DID";
+        })
+    }
+
+    resolveVCServiceEndpoint() {
+        return this.resolve(resolver)
+        .then(did => {
+            if (did != null && typeof did == 'object' && did.hasOwnProperty('service')) {
+                for (var i = 0; i < did.service.length; i++) {
+                    if (did.service[i].type == "VerifiableCredentialService") {
+                        return did.service[i].serviceEndpoint
+                    }
+                }
+            }
+
+            throw "No VerifiableCredentialService resolved for this DID";
         })
     }
 
@@ -145,6 +160,20 @@ class WebDID {
             .then(vc => {
                 return didJWT.decodeJWT(vcJwt)
             })
+    }
+
+    getVerifiablePresentation () {
+        let presentationPayload = {
+          vp: {
+            '@context': ['https://www.w3.org/2018/credentials/v1'],
+            type: ['VerifiablePresentation'],
+            verifiableCredential: this.vc
+          }
+        }
+
+        let signer = didJWT.SimpleSigner(this.keypair.priv)
+
+        return didVC.createPresentation(vcPayload, {did: this.getID(), signer: signer})
     }
 
     expirationTimestamp(days){

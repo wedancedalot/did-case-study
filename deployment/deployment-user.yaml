@@ -22,7 +22,7 @@ spec:
           - name: HTTPS_PORT
             value: "443"
           - name: HTTP_PORT
-            value: "8080"
+            value: "8081"
           - name: NODE_TLS_REJECT_UNAUTHORIZED
             value: "0"
       imagePullSecrets:

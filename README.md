@@ -16,7 +16,7 @@ docker-compose up
 
 The status of the containers can be checked using `docker ps` command.
 
-Once the containers are started, navigate to http://localhost:8081/ for a step by step wizard. The descriptions for the flow of the case study including the entities and their roles is included into the wizard.
+Once the containers are started, navigate to http://localhost:8080/ for a step by step wizard. The descriptions for the flow of the case study including the entities and their roles is included into the wizard.
 
 #### Used libraries
 This code is based on [Web DID Resolver](https://github.com/decentralized-identity/web-did-resolver) library for resolving DIDs via https protocol as well as

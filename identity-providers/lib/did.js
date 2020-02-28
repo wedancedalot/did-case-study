@@ -13,29 +13,41 @@ const VC_CONTEXT = "https://www.w3.org/2018/credentials/v1"
 const PUBLIC_KEY_TYPE = "Secp256k1VerificationKey2018"
 const JWT_ALG = 'ES256K-R'
 
+// A helper class for DID-related functionality, such as doc resolving and VC issuing and signing
+// based on did-jwt and did-jwt-vc libs
 class WebDID {
     constructor(name) {
         if (!name) {
             throw "Name not provided"
         }
 
-        this.id = "did:web:" + name
+        this.id = name
         this.keypair = this.randomKeypair()
-        this.vs = []
     }
 
-    addVC(vc) {
-        this.vs.push(vs)
+    setIdentityCredential(vc) {
+        this.identity = vc
+    }
+
+    getIdentityCredential() {
+        return this.identity
     }
 
     getID () {
         return this.id
     }
 
+    /**
+     * @param  {string} uri for DID agent service, this will be displayed as a part of DID doc
+     */
     setAgentService(endpoint) {
         this.agentServiceEndpoint = endpoint
     }
 
+
+    /**
+     * @param  {string} uri for DID verified credentials service, this will be displayed as a part of DID doc
+     */
     setVCService(endpoint) {
         this.vcServiceEndpoint = endpoint
     }
@@ -88,26 +100,36 @@ class WebDID {
         return did
     }
 
-    requestVerification(aud) {
+    /**
+     * @param  {WebDID} DID document to request verification from
+     * @param  {Object} list of claims to be sent as a part of verification request
+     */
+    requestVerification(aud, claims = {}) {
         let signer = didJWT.SimpleSigner(this.keypair.priv)
 
         return didJWT.createJWT({
             aud: aud.getID(), 
             exp: this.expirationTimestamp(1), 
+            claims,
         }, {
             alg: JWT_ALG, 
             issuer: this.getID(), 
             signer
         }).then(jwt => {
-            return this.sendToAgentService(jwt, aud, resolver)
+            return this.sendToAgentService(jwt, aud)
         }).then(resp => {
             return resp.data 
         })
     }
 
-    // There's no js resolver for web which resolves services propertly, thus - quick and dirty solution :)
-    // This function is analogous to uport's messageToURI but uses the DID of target to resolve it's address 
-    // using the AgentService endpoint
+    /**
+     * There's no js resolver for web which resolves services propertly, thus - quick and dirty solution :)
+     * This function is analogous to uport's messageToURI but uses the DID of target to resolve it's address 
+     * using the AgentService endpoint
+
+     * @param  {WebDID} DID document to request verification from
+     * @param  {Object} list of claims to be sent as a part of verification request
+     */
     sendToAgentService(msg, did) {
         return did.resolveAgentServiceEndpoint(resolver)
         .then(endpoint => {
@@ -115,6 +137,9 @@ class WebDID {
         })
     }
 
+    /**
+     * Resolve AgentService url from DID 'service' field
+     */
     resolveAgentServiceEndpoint() {
         return this.resolve(resolver)
         .then(did => {
@@ -130,6 +155,9 @@ class WebDID {
         })
     }
 
+    /**
+     * Resolve VerifiableCredentialService url from DID 'service' field
+     */
     resolveVCServiceEndpoint() {
         return this.resolve(resolver)
         .then(did => {
@@ -145,16 +173,42 @@ class WebDID {
         })
     }
 
+    /**
+     * Send request to VerifiableCredentialService endpoint and verify the response
+     */
+    requestAndVerifyClaims() {
+        return this.resolveVCServiceEndpoint()
+        .then(axios.get)
+        .then(resp => {
+            return this.verifyCredentialFromJSON(resp.data)
+        })
+        .then(resp => {
+            return resp.payload
+        })
+    }
+
+    /**
+     * Verifies the request issuer's signature using JWT
+     * @param  {string} JWT to verify
+     */
     verifyRequest(msg) {
         return didJWT.verifyJWT(msg, {resolver, audience: this.getID()})
     }
-
+ 
+    /**
+     * Packs VC into JWT payload and signs with the private key
+     * @param  {Object} list of verified claims
+     */
     signCredential(vcPayload) {
         let signer = didJWT.SimpleSigner(this.keypair.priv)
 
         return didVC.createVerifiableCredential(vcPayload, {did: this.getID(), signer: signer})
     }
 
+    /**
+     * Verifies VC JWT issuer's signature
+     * @param  {string} JWT to verify
+     */
     verifyCredential(vcJwt) {
         return didVC.verifyCredential(vcJwt, resolver)
             .then(vc => {
@@ -162,18 +216,8 @@ class WebDID {
             })
     }
 
-    getVerifiablePresentation () {
-        let presentationPayload = {
-          vp: {
-            '@context': ['https://www.w3.org/2018/credentials/v1'],
-            type: ['VerifiablePresentation'],
-            verifiableCredential: this.vc
-          }
-        }
-
-        let signer = didJWT.SimpleSigner(this.keypair.priv)
-
-        return didVC.createPresentation(vcPayload, {did: this.getID(), signer: signer})
+    verifyCredentialFromJSON(vcJSON) {
+        return this.verifyCredential(vcJSON.data + "." + vcJSON.signature)
     }
 
     expirationTimestamp(days){

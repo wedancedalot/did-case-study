@@ -36,7 +36,7 @@
             </p>
 
             <v-card>
-              <pre>{{ identityVC }}</pre>
+              <pre>{{ identityVC.payload.vc }}</pre>
             </v-card>
 
             <v-flex text-xs-center>
@@ -69,7 +69,7 @@
             </p>
 
             <v-card>
-              <pre>{{ prescriptionVC }}</pre>
+              <pre>{{ prescriptionVC.payload.vc }}</pre>
             </v-card>
 
             <v-flex text-xs-center>
@@ -89,18 +89,23 @@
             <h2>All done</h2>
             <p>
               The case has been settled
-
-              What has just happened? 
-
-              <ol>
-                <li>Insurance company's cloud agent has validated that request is recieved from the user</li>
-                <li>Insurance company's cloud agent has validated that request the user has a valid identity credential issued by a reliable entity</li>
-                <li>Insurance company's cloud agent has validated that request the user has a valid medical prescription</li>
-                <li>Insurance company's cloud agent has validated that request the organization, which issue the medical prescription has a valid credential from a trusted issued</li>
-                <li>Insurance company can now apply any logics, as updating it's records in the DB and settling the case</li>
-              </ol>
             </p>
-
+            <p>
+              Here's the output of all the credentials obtained and verified by insurance using the DIDs
+            </p>
+            <v-card>
+              <pre>{{ invoiceData }}</pre>
+            </v-card>               
+            <p>
+              What has happened in the background?
+            </p>
+            <ol>
+              <li>Insurance company's cloud agent has validated that request is recieved from the user</li>
+              <li>Insurance company's cloud agent has validated that request the user has a valid identity credential issued by a reliable entity</li>
+              <li>Insurance company's cloud agent has validated that request the user has a valid medical prescription</li>
+              <li>Insurance company's cloud agent has validated that request the organization, which issue the medical prescription has a valid credential from a trusted issued</li>
+              <li>Insurance company can now apply any logics, as updating it's records in the DB and settling the case</li>
+            </ol>
             <h3>Where to look next?</h3>
             <p>
               Check README.md at the root of repo and source codes of the application for more details
@@ -128,26 +133,28 @@
       step: null,
       identityVC: null,
       prescriptionVC: null,
+      invoiceData: null,
     }),
 
     methods: {
       getIdentity() {
         this.$wallet.getIdentity().then(resp => {
           this.step = this.STEP_IDENTITY_RECEIVED
-          this.identityVC = resp.payload.vc
+          this.identityVC = resp
         })
       },
 
       getPrescription() {
         this.$wallet.getPrescription().then(resp => {
           this.step = this.STEP_PRESCRIPTION_RECEIVED
-          this.prescriptionVC = resp.payload.vc
+          this.prescriptionVC = resp
         })
       },
 
       getInsurance() {
         this.$wallet.getInsurance(this.prescriptionVC).then(resp => {
           this.step = this.STEP_INSURANCE_RECEIVED
+          this.invoiceData = resp
         })
       },
     }

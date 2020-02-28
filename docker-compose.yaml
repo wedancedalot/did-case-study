@@ -1,4 +1,4 @@
-version: '3.7'
+version: '3'
 
 services:
   identity-notary:
@@ -19,8 +19,6 @@ services:
       dockerfile: Dockerfile
     env_file:
       - .env
-    depends_on: 
-      - identity-notary
     command: "npm run start:clinic"
 
   identity-insurance:
@@ -31,8 +29,6 @@ services:
       dockerfile: Dockerfile
     env_file:
       - .env
-    depends_on:
-      - identity-notary
     command: "npm run start:insurance"
 
   identity-user:
@@ -45,10 +41,6 @@ services:
       - 8080:8080
     env_file:
       - .env
-    depends_on:
-      - identity-notary
-      - identity-clinic
-      - identity-insurance
     command: "npm run start:user"
 
   wallet-ui:
@@ -62,6 +54,9 @@ services:
     env_file:
       - .env
     depends_on:
+      - identity-notary
+      - identity-clinic
+      - identity-insurance
       - identity-user
     command: "npm run serve"
 

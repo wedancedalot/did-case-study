@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: identity-notary
+  labels:
+    app: identity-notary
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: identity-notary
+  template:
+    metadata:
+      labels:
+        app: identity-notary
+    spec:
+      containers:
+        - name: identity-notary
+          image: rg.fr-par.scw.cloud/affectionatenewton/identity-image:latest
+          command: ["npm", "run", "start:notary"]
+          env:
+          - name: HTTPS_PORT
+            value: "443"
+          - name: HTTP_PORT
+            value: "8080"
+          - name: NODE_TLS_REJECT_UNAUTHORIZED
+            value: "0"
+      imagePullSecrets:
+        - name: registry-secret
